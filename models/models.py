@@ -14,8 +14,9 @@ def get_model(model_config):
     elif model_config.architecture == 'polonskaya_model':
         model = ResNet18Model(num_classes=model_config.num_classes)   
     elif model_config.architecture == 'ashrapov_model':
-        return NeuralNetwork(num_classes=model_config.num_classes, dropout=model_config.dropout)
+        return AshrapovNetwork(num_classes=model_config.num_classes, dropout=model_config.dropout)
     return model
+
 
 class ConvNet(nn.Module):
     def __init__(self, num_classes=46):
@@ -238,9 +239,9 @@ class SidorchukNetwork(nn.Module):
         return X
 
 
-class NeuralNetwork(nn.Module):
+class AshrapovNetwork(nn.Module):
     def __init__(self, num_classes=46, dropout=0.5):
-        super(NeuralNetwork, self).__init__()
+        super(AshrapovNetwork, self).__init__()
         self.linear_relu_stack = nn.Sequential(
           nn.Conv2d(3, 64, kernel_size=3, padding=1),
           nn.BatchNorm2d(64),
@@ -284,7 +285,7 @@ class NeuralNetwork(nn.Module):
           nn.Dropout(dropout),
 
           nn.Flatten(),
-          nn.Linear(50176, 256),
+          nn.Linear(65536, 256),
           nn.BatchNorm1d(256),
           nn.ReLU(),
           nn.Linear(256, 256),

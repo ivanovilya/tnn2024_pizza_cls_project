@@ -4,7 +4,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from omegaconf import OmegaConf
-# import argparse
+import argparse
 
 from data.dataset import get_data_loaders
 from models.models import get_model
@@ -99,7 +99,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help='path to config')
     args = parser.parse_args()
-    #args = OmegaConf.from_cli()
 
     config = OmegaConf.load(args.config)
     print(config)
