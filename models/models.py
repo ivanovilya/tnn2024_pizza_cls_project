@@ -7,13 +7,14 @@ from torchvision import models
 def get_model(model_config):
     if model_config.architecture == 'mamedov_model':
         model = ConvNet(num_classes=model_config.num_classes)
+    elif model_config.architecture == 'Askarkhujaev_model':
+        model = Askarkhujaev_Network(num_classes=model_config.num_classes)
     elif model_config.architecture == 'Sidorchuk_model':
         model = SidorchukNetwork()
     elif model_config.architecture == 'polonskaya_model':
         model = ResNet18Model(num_classes=model_config.num_classes)   
     elif model_config.architecture == 'ashrapov_model':
         return NeuralNetwork(num_classes=model_config.num_classes, dropout=model_config.dropout)
-
     return model
 
 class ConvNet(nn.Module):
@@ -68,7 +69,35 @@ class ConvNet(nn.Module):
         x = self.classifier(x)
         return x
 
-    
+
+class Askarkhujaev_Network(nn.Module):
+    def __init__(self, num_classes):
+        super(Askarkhujaev_Network, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(32, 64, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 128, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 30 * 30, 128),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(128, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.conv_layers(x)
+        x = self.fc_layers(x)
+        return x
+
+
 class SidorchukNetwork(nn.Module):
     def __init__(self):
         super(SidorchukNetwork, self).__init__()
