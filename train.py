@@ -5,12 +5,13 @@ import torch.optim as optim
 import torch.nn as nn
 from omegaconf import OmegaConf
 import argparse
+from torch.utils.tensorboard import SummaryWriter  # Импортируем для работы с TensorBoard
 
 from data.dataset import get_data_loaders
 from models.models import get_model
 
 
-def train_model(model, train_loader, val_loader, device, training_config):
+def train_model(model, train_loader, val_loader, device, training_config, writer):
     epochs = training_config.epochs
     lr = training_config.lr
     weight_decay = training_config.weight_decay
@@ -61,6 +62,13 @@ def train_model(model, train_loader, val_loader, device, training_config):
         val_loss /= len(val_loader.dataset)
         val_acc = val_corrects / len(val_loader.dataset)
 
+        # Логирование результатов валидации и learning rate в TensorBoard
+        writer.add_scalar('Loss/train', epoch_loss, epoch)
+        writer.add_scalar('Accuracy/train', epoch_acc, epoch)
+        writer.add_scalar('Loss/val', val_loss, epoch)
+        writer.add_scalar('Accuracy/val', val_acc, epoch)
+        writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
+
         scheduler.step(val_loss)
 
         print(f"Epoch [{epoch}/{epochs}] | "
@@ -92,7 +100,13 @@ def train_pizza_classifier(config):
     train_loader, val_loader = get_data_loaders(config.data)
     model = get_model(config.model).to(device)
 
-    train_model(model, train_loader, val_loader, device, config.training)
+    # Инициализация TensorBoard SummaryWriter
+    writer = SummaryWriter(log_dir='runs')
+
+    train_model(model, train_loader, val_loader, device, config.training, writer)
+
+    # Закрытие writer после завершения тренировки
+    writer.close()
 
 
 if __name__ == '__main__':
