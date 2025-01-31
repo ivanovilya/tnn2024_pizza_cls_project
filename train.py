@@ -5,12 +5,17 @@ import torch.optim as optim
 import torch.nn as nn
 from omegaconf import OmegaConf
 import argparse
+from datetime import datetime
+from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import get_data_loaders
 from models.models import get_model
 
 
 def train_model(model, train_loader, val_loader, device, training_config):
+    log_dir = "runs/logs_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+    writer = SummaryWriter(log_dir)
+    
     epochs = training_config.epochs
     lr = training_config.lr
     weight_decay = training_config.weight_decay
@@ -61,6 +66,14 @@ def train_model(model, train_loader, val_loader, device, training_config):
         val_loss /= len(val_loader.dataset)
         val_acc = val_corrects / len(val_loader.dataset)
 
+        # tensorboard
+        writer.add_scalar('Training Loss', epoch_loss, epoch)
+        writer.add_scalar('Val Loss', val_loss, epoch)
+        
+        for name, param in model.named_parameters():
+            writer.add_histogram(f'Weights/{name}', param, epoch)
+            writer.add_histogram(f'Gradients/{name}', param.grad, epoch)
+          
         scheduler.step(val_loss)
 
         print(f"Epoch [{epoch}/{epochs}] | "
@@ -82,6 +95,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
     
     torch.save(model.state_dict(), "model_best.pth")
     print("Model saved in model_best.pth")
+    writer.close()
     # return model
 
 
