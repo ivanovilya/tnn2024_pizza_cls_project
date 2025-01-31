@@ -11,20 +11,17 @@ from models.models import get_model
 
 
 def train_model(model, train_loader, val_loader, device, training_config):
-    epochs = training_config.epochs
-    lr = training_config.lr
-    weight_decay = training_config.weight_decay
-    max_patience = training_config.max_patience
-    
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.6, patience=2)
+    criterion = getattr(nn, training_config.loss_function)()
+    optimizer = optim.Adam(model.parameters(), lr=training_config.lr, weight_decay=training_config.weight_decay)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode=training_config.scheduler_mode,
+                                                     factor=training_config.factor,
+                                                     patience=training_config.scheduler_patience)
 
     best_val_loss = float('inf')
     best_model_state = None
     patience_counter = 0
 
-    for epoch in range(1, epochs + 1):
+    for epoch in range(1, training_config.epochs + 1):
         model.train()
         running_loss = 0.0
         running_corrects = 0
@@ -63,7 +60,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
 
         scheduler.step(val_loss)
 
-        print(f"Epoch [{epoch}/{epochs}] | "
+        print(f"Epoch [{epoch}/{training_config.epochs}] | "
               f"Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.4f} | "
               f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
 
@@ -73,20 +70,19 @@ def train_model(model, train_loader, val_loader, device, training_config):
             patience_counter = 0
         else:
             patience_counter += 1
-            if patience_counter >= max_patience:
+            if patience_counter >= training_config.max_patience:
                 print("Early stopping triggered!")
                 break
 
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
-    
-    torch.save(model.state_dict(), "model_best.pth")
-    print("Model saved in model_best.pth")
-    # return model
+
+    torch.save(model.state_dict(), training_config.model_save_path)
+    print(f"Model saved in {training_config.model_save_path}")
 
 
 def train_pizza_classifier(config):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(config.device)
     print("Using device:", device)
 
     train_loader, val_loader = get_data_loaders(config.data)
@@ -97,9 +93,10 @@ def train_pizza_classifier(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config')
+    parser.add_argument('--config', help='path to config', required=True)
     args = parser.parse_args()
 
     config = OmegaConf.load(args.config)
     print(config)
+
     train_pizza_classifier(config)
