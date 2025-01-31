@@ -9,7 +9,7 @@ import argparse
 from data.dataset import get_data_loaders
 from models.models import get_model
 
-
+# test comment
 def train_model(model, train_loader, val_loader, device, training_config):
     epochs = training_config.epochs
     lr = training_config.lr
