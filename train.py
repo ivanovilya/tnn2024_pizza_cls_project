@@ -95,6 +95,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
     
     torch.save(model.state_dict(), "model_best.pth")
     print("Model saved in model_best.pth")
+    writer.close()
     # return model
 
 
