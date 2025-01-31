@@ -12,9 +12,11 @@ def get_model(model_config):
     elif model_config.architecture == 'Sidorchuk_model':
         model = SidorchukNetwork()
     elif model_config.architecture == 'polonskaya_model':
-        model = ResNet18Model(num_classes=model_config.num_classes)   
+        model = ResNet18Model(num_classes=model_config.num_classes)
     elif model_config.architecture == 'ashrapov_model':
         return AshrapovNetwork(num_classes=model_config.num_classes, dropout=model_config.dropout)
+    elif model_config.architecture == 'ruzmetov_model':
+        return RuzmetovNetwork(num_classes=model_config.num_classes)
     return model
 
 
@@ -243,63 +245,63 @@ class AshrapovNetwork(nn.Module):
     def __init__(self, num_classes=46, dropout=0.5):
         super(AshrapovNetwork, self).__init__()
         self.linear_relu_stack = nn.Sequential(
-          nn.Conv2d(3, 64, kernel_size=3, padding=1),
-          nn.BatchNorm2d(64),
-          nn.ReLU(),
-          nn.Conv2d(64, 64, kernel_size=3, padding=1),
-          nn.BatchNorm2d(64),
-          nn.ReLU(),
-          nn.MaxPool2d(2, 2),
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-          nn.Conv2d(64, 128, kernel_size=3, padding=1),
-          nn.BatchNorm2d(128),
-          nn.ReLU(),
-          nn.Conv2d(128, 128, kernel_size=3, padding=1),
-          nn.BatchNorm2d(128),
-          nn.ReLU(),
-          nn.MaxPool2d(2, 2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-          nn.Conv2d(128, 256, kernel_size=3, padding=1),
-          nn.BatchNorm2d(256),
-          nn.ReLU(),
-          nn.Conv2d(256, 256, kernel_size=3, padding=1),
-          nn.BatchNorm2d(256),
-          nn.ReLU(),
-          nn.MaxPool2d(2, 2),
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-          nn.Conv2d(256, 512, kernel_size=3, padding=1),
-          nn.BatchNorm2d(512),
-          nn.ReLU(),
-          nn.Conv2d(512, 512, kernel_size=3, padding=1),
-          nn.BatchNorm2d(512),
-          nn.ReLU(),
-          nn.MaxPool2d(2, 2),
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-          nn.Conv2d(512, 1024, kernel_size=3, padding=1),
-          nn.BatchNorm2d(1024),
-          nn.ReLU(),
-          nn.Conv2d(1024, 1024, kernel_size=3, padding=1),
-          nn.BatchNorm2d(1024),
-          nn.ReLU(),
-          nn.MaxPool2d(2, 2),
-          nn.Dropout(dropout),
+            nn.Conv2d(512, 1024, kernel_size=3, padding=1),
+            nn.BatchNorm2d(1024),
+            nn.ReLU(),
+            nn.Conv2d(1024, 1024, kernel_size=3, padding=1),
+            nn.BatchNorm2d(1024),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Dropout(dropout),
 
-          nn.Flatten(),
-          nn.Linear(65536, 256),
-          nn.BatchNorm1d(256),
-          nn.ReLU(),
-          nn.Linear(256, 256),
-          nn.BatchNorm1d(256),
-          nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(65536, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
 
-          nn.Linear(256, num_classes)
+            nn.Linear(256, num_classes)
         )
 
     def forward(self, x):
         logits = self.linear_relu_stack(x)
         return logits
-    
-    
+
+
 class ResNet18Model(nn.Module):
     def __init__(self, num_classes):
         super(ResNet18Model, self).__init__()
@@ -367,14 +369,12 @@ class Averin_Network(nn.Module):
 
 class RuzmetovNetwork(nn.Module):
     def __init__(self, num_classes):
-
         super().__init__()
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-
 
         self.layer1_conv1 = nn.Conv2d(64, 64, kernel_size=1, bias=False)
         self.layer1_bn1 = nn.BatchNorm2d(64)

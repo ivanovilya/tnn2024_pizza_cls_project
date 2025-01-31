@@ -30,12 +30,14 @@ def train_model(model, train_loader, val_loader, device, training_config):
 
     for epoch in range(1, epochs + 1):
         epoch_start_time = time.time()
+        logger.info(f"Starting epoch {epoch}/{epochs}")
 
         model.train()
         running_loss = 0.0
         running_corrects = 0
 
         for batch_idx, (images, labels) in enumerate(train_loader):
+            batch_start_time = time.time()
             images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
@@ -48,11 +50,14 @@ def train_model(model, train_loader, val_loader, device, training_config):
             preds = outputs.argmax(dim=1)
             running_corrects += (preds == labels).sum().item()
 
+            batch_end_time = time.time()
+
             if batch_idx % 10 == 0:
-                logger.debug(f"Epoch {epoch}, Batch {batch_idx}/{len(train_loader)}: Loss={loss.item():.4f}")
+                logger.info(f"Epoch {epoch}, Batch {batch_idx}/{len(train_loader)} | Loss={loss.item():.4f} | Processed Images: {(batch_idx + 1) * train_loader.batch_size}/{len(train_loader.dataset)} | Batch Time: {batch_end_time - batch_start_time:.2f} seconds")
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_acc = running_corrects / len(train_loader.dataset)
+        logger.info(f"Epoch {epoch} completed | Train Loss: {epoch_loss:.4f}, Train Accuracy: {epoch_acc:.4f}")
 
         model.eval()
         val_loss = 0.0
@@ -69,17 +74,15 @@ def train_model(model, train_loader, val_loader, device, training_config):
 
         val_loss /= len(val_loader.dataset)
         val_acc = val_corrects / len(val_loader.dataset)
+        logger.info(f"Validation Results - Loss: {val_loss:.4f}, Accuracy: {val_acc:.4f}")
 
         scheduler.step(val_loss)
-
+        current_lr = optimizer.param_groups[0]['lr']
 
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
 
-        logger.info(f"Epoch [{epoch}/{epochs}] | "
-                    f"Train Loss: {epoch_loss:.4f}, Train Acc: {epoch_acc:.4f} | "
-                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f} | "
-                    f"Duration: {epoch_duration:.2f} seconds")
+        logger.info(f"Epoch [{epoch}/{epochs}] completed in {epoch_duration:.2f} seconds | Train Loss: {epoch_loss:.4f}, Train Accuracy: {epoch_acc:.4f} | Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.4f} | Learning Rate: {current_lr:.6f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
