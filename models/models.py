@@ -7,6 +7,8 @@ from torchvision import models
 def get_model(model_config):
     if model_config.architecture == 'mamedov_model':
         model = ConvNet(num_classes=model_config.num_classes)
+    elif model_config.architecture == 'averin_model':
+        model = Averin_Network(num_classes=model_config.num_classes, dropout=model_config.dropout)
     elif model_config.architecture == 'Sidorchuk_model':
         model = SidorchukNetwork()
     elif model_config.architecture == 'polonskaya_model':
