@@ -3,13 +3,15 @@ import pandas as pd
 import torch
 import torch.optim as optim
 import torch.nn as nn
+import logging
 from omegaconf import OmegaConf
 import argparse
 
 from data.dataset import get_data_loaders
 from models.models import get_model
 
-# test comment
+logger = logging.getLogger(__name__)
+
 def train_model(model, train_loader, val_loader, device, training_config):
     epochs = training_config.epochs
     lr = training_config.lr
@@ -25,6 +27,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
     patience_counter = 0
 
     for epoch in range(1, epochs + 1):
+        logger.info("Running epoch: ", epoch)
         model.train()
         running_loss = 0.0
         running_corrects = 0
@@ -66,8 +69,10 @@ def train_model(model, train_loader, val_loader, device, training_config):
         print(f"Epoch [{epoch}/{epochs}] | "
               f"Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.4f} | "
               f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
-
+        
+        logger.info("Validation loss: ", val_loss)
         if val_loss < best_val_loss:
+            logger.info("Updated best validation loss: ", val_loss)
             best_val_loss = val_loss
             best_model_state = model.state_dict()
             patience_counter = 0
@@ -96,10 +101,12 @@ def train_pizza_classifier(config):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='training_data.log', level=logging.INFO)
+    logger.info('Reading from config...')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help='path to config')
     args = parser.parse_args()
 
     config = OmegaConf.load(args.config)
-    print(config)
+    logger.info(config)
     train_pizza_classifier(config)
