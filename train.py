@@ -5,12 +5,13 @@ import torch.optim as optim
 import torch.nn as nn
 from omegaconf import OmegaConf
 import argparse
+from torch.utils.tensorboard import SummaryWriter  # Импортируем для работы с TensorBoard
 
 from data.dataset import get_data_loaders
 from models.models import get_model
 
 
-def train_model(model, train_loader, val_loader, device, training_config):
+def train_model(model, train_loader, val_loader, device, training_config, writer):
     epochs = training_config.epochs
     lr = training_config.lr
     weight_decay = training_config.weight_decay
@@ -28,6 +29,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
         model.train()
         running_loss = 0.0
         running_corrects = 0
+        train_losses = []
 
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
@@ -39,6 +41,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
             optimizer.step()
 
             running_loss += loss.item() * images.size(0)
+            train_losses.append(loss.item())
             preds = outputs.argmax(dim=1)
             running_corrects += (preds == labels).sum().item()
 
@@ -48,6 +51,7 @@ def train_model(model, train_loader, val_loader, device, training_config):
         model.eval()
         val_loss = 0.0
         val_corrects = 0
+        val_losses = []
 
         with torch.no_grad():
             for images, labels in val_loader:
@@ -55,11 +59,23 @@ def train_model(model, train_loader, val_loader, device, training_config):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 val_loss += loss.item() * images.size(0)
+                val_losses.append(loss.item())
                 preds = outputs.argmax(dim=1)
                 val_corrects += (preds == labels).sum().item()
 
         val_loss /= len(val_loader.dataset)
         val_acc = val_corrects / len(val_loader.dataset)
+
+        # Логирование результатов валидации и learning rate в TensorBoard
+        writer.add_scalar('Loss/train', epoch_loss, epoch)
+        writer.add_scalar('Accuracy/train', epoch_acc, epoch)
+        writer.add_scalar('Loss/val', val_loss, epoch)
+        writer.add_scalar('Accuracy/val', val_acc, epoch)
+        writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
+        
+        # Логирование распределения потерь
+        writer.add_histogram('Train/Loss Distribution', torch.tensor(train_losses), epoch)
+        writer.add_histogram('Validation/Loss Distribution', torch.tensor(val_losses), epoch)
 
         scheduler.step(val_loss)
 
@@ -92,7 +108,13 @@ def train_pizza_classifier(config):
     train_loader, val_loader = get_data_loaders(config.data)
     model = get_model(config.model).to(device)
 
-    train_model(model, train_loader, val_loader, device, config.training)
+    # Инициализация TensorBoard SummaryWriter
+    writer = SummaryWriter(log_dir='runs')
+
+    train_model(model, train_loader, val_loader, device, config.training, writer)
+
+    # Закрытие writer после завершения тренировки
+    writer.close()
 
 
 if __name__ == '__main__':
