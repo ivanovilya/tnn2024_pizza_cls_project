@@ -7,8 +7,8 @@ data:
   classes_csv: "data/classes.csv"
   train_img_dir: "data/train_256"
   test_img_dir: "data/test_256"
-  image_size: 256
-  batch_size: 24
+  image_size: 128
+  batch_size: 64
   val_size: 0.25
   num_workers: 0
   stratify: false
