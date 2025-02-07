@@ -13,7 +13,7 @@ def get_data_loaders(data_config):
     classes_csv = pd.read_csv(data_config.classes_csv)
     num_classes = len(classes_csv)
     print(f"num_classes from classes.csv = {num_classes}")
-    
+
     train_csv = pd.read_csv(data_config.train_csv)
 
     train_loader, val_loader, _ = create_dataloaders(
@@ -26,7 +26,8 @@ def get_data_loaders(data_config):
         val_size=data_config.val_size,
         num_workers=data_config.num_workers,
         stratify=data_config.stratify,
-        random_state=data_config.random_state
+        random_state=data_config.random_state,
+        augmentations=data_config.augmentations
     )
     return train_loader, val_loader
 
@@ -67,7 +68,8 @@ def create_dataloaders(
     val_size=0.25,
     num_workers=0,
     stratify=False,
-    random_state=42
+    random_state=42,
+    augmentations=None
 ):
     if stratify and 'label' in train_csv.columns:
         train_df, val_df = train_test_split(
@@ -84,11 +86,17 @@ def create_dataloaders(
         )
 
     train_transform = T.Compose([
-        T.RandomHorizontalFlip(p=0.5),
-        T.RandomVerticalFlip(p=0.5),
-        T.RandomRotation(degrees=25),
-        T.RandomResizedCrop((image_size, image_size), scale=(0.75, 1.0)),
-        T.ColorJitter(contrast=0.25),
+        T.RandomHorizontalFlip(p=augmentations.random_horizontal_flip if augmentations else 0.5),
+        T.RandomVerticalFlip(p=augmentations.random_vertical_flip if augmentations else 0.5),
+        T.RandomRotation(degrees=augmentations.random_rotation if augmentations else 25),
+        T.RandomResizedCrop(
+            (image_size, image_size),
+            scale=(
+                augmentations.random_resized_crop.scale_min if augmentations else 0.75,
+                augmentations.random_resized_crop.scale_max if augmentations else 1.0
+            )
+        ),
+        T.ColorJitter(contrast=augmentations.color_jitter_contrast if augmentations else 0.25),
         T.ToTensor(),
     ])
 

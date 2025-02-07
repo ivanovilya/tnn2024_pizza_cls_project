@@ -13,7 +13,15 @@ data:
   num_workers: 0
   stratify: false
   random_state: 42
-
+  augmentations:
+    random_horizontal_flip: 0.5
+    random_vertical_flip: 0.5
+    random_rotation: 25
+    random_resized_crop:
+      scale_min: 0.75
+      scale_max: 1.0
+    color_jitter_contrast: 0.25
+    
 model:
   architecture: 'ruzmetov_model'
   num_classes: 46
